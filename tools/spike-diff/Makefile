@@ -15,7 +15,8 @@
 
 REPO_PATH = repo
 ifeq ($(wildcard repo/spike_main),)
-  $(shell git clone --depth=1 git@github.com:NJU-ProjectN/riscv-isa-sim $(REPO_PATH))
+  $(shell git clone --depth=1 git@github.com:riscv-software-src/riscv-isa-sim $(REPO_PATH))
+  $(shell bash ./patch.sh)
 endif
 
 REPO_BUILD_PATH = $(REPO_PATH)/build
@@ -27,7 +28,7 @@ $(REPO_MAKEFILE):
 
 SPIKE = $(REPO_BUILD_PATH)/spike
 $(SPIKE): $(REPO_MAKEFILE)
-	CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden" $(MAKE) -C $(^D)
+	CFLAGS="-fvisibility=hidden" CXXFLAGS="-fvisibility=hidden" $(MAKE) -C $(^D) -j$(shell nproc)
 
 BUILD_DIR = ./build
 $(shell mkdir -p $(BUILD_DIR))
@@ -40,7 +41,7 @@ INC_LIBS  = $(addprefix $(REPO_PATH)/build/, $(lib_dependencies))
 
 NAME = $(GUEST_ISA)-spike-so
 BINARY = $(BUILD_DIR)/$(NAME)
-SRCS = difftest.cc
+SRCS = difftest.cc repo/riscv/sim.cc
 
 $(BINARY): $(SPIKE) $(SRCS)
 	g++ -std=c++17 -O2 -shared -fPIC -fvisibility=hidden $(INC_PATH) $(SRCS) $(INC_LIBS) -o $@
